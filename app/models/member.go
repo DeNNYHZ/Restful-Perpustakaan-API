@@ -14,6 +14,7 @@ type Member struct {
 	MembershipType   string    `json:"membership_type"`   // e.g., "Regular", "Student", "Premium"
 	Username         string    `json:"username"`          // e.g., "johndoe"
 	Gender           string    `json:"gender"`            // e.g., "Male", "Female", "Other" or any
+	FineAmount       float64   `json:"fine_amount"`       // e.g., float64
 
 	// ... tambahkan field lain sesuai kebutuhan
 }

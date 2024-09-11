@@ -1,41 +1,48 @@
 package services
 
 import (
+	"Restful-Perpustakaan-API/app/models"
 	"Restful-Perpustakaan-API/app/repositories"
 	"errors"
 	"time"
-
-	"Restful-Perpustakaan-API/app/user" // Ganti dengan path yang sesuai
 )
 
 // AdminService provides methods for admin operations
 type AdminService struct {
-	userRepository repositories.MemberRepository // Atau database.MemberRepository jika Anda menggunakan struct Member untuk admin/pustakawan
+	userRepository   repositories.UserRepository
+	bookRepository   repositories.BookRepository
+	memberRepository repositories.MemberRepository
+	loanRepository   repositories.LoanRepository
 }
 
 // NewAdminService creates a new AdminService instance
-func NewAdminService(userRepository repositories.MemberRepository) *AdminService {
-	return &AdminService{userRepository: userRepository}
+func NewAdminService(userRepository repositories.UserRepository, bookRepository repositories.BookRepository, memberRepository repositories.MemberRepository, loanRepository database.LoanRepository) *AdminService {
+	return &AdminService{
+		userRepository:   userRepository,
+		bookRepository:   bookRepository,
+		memberRepository: memberRepository,
+		loanRepository:   loanRepository,
+	}
 }
 
 // GetDashboardData mengambil data untuk dashboard admin
 func (as *AdminService) GetDashboardData() (map[string]interface{}, error) {
-	totalMembers, err := as.userRepository.GetTotalMembers()
+	totalMembers, err := as.memberRepository.GetTotalMembers()
 	if err != nil {
 		return nil, err
 	}
 
-	totalBooks, err := repositories.GetTotalBooks() // Asumsikan fungsi ini ada di database.go
+	totalBooks, err := as.bookRepository.GetTotalBooks()
 	if err != nil {
 		return nil, err
 	}
 
-	totalLoans, err := repositories.GetTotalLoans() // Asumsikan fungsi ini ada di database.go
+	totalLoans, err := as.loanRepository.GetTotalLoans()
 	if err != nil {
 		return nil, err
 	}
 
-	overdueLoans, err := repositories.GetOverdueLoans() // Asumsikan fungsi ini ada di database.go
+	overdueLoans, err := as.loanRepository.GetOverdueLoans()
 	if err != nil {
 		return nil, err
 	}
@@ -55,39 +62,97 @@ func (as *AdminService) GetDashboardData() (map[string]interface{}, error) {
 
 // GenerateReports menghasilkan laporan-laporan yang dibutuhkan admin
 func (as *AdminService) GenerateReports(reportType string, startDate, endDate time.Time) (interface{}, error) {
-	// Implementasikan logika untuk menghasilkan laporan berdasarkan reportType dan rentang waktu
-	// ...
-
-	// Contoh sederhana (ganti dengan logika Anda sendiri)
 	switch reportType {
 	case "loan_report":
-		return repositories.GetLoanReport(startDate, endDate) // Asumsikan fungsi ini ada di database.go
+		return as.loanRepository.GetLoanReport(startDate, endDate)
 	case "member_report":
 		// ... logika untuk menghasilkan laporan anggota
+		// Anda bisa menggunakan as.memberRepository untuk mengambil data anggota yang diperlukan
+	case "book_report":
+		// ... logika untuk menghasilkan laporan buku
+		// Anda bisa menggunakan as.bookRepository untuk mengambil data buku yang diperlukan
 	// ... tambahkan jenis laporan lain sesuai kebutuhan
 	default:
 		return nil, errors.New("invalid report type")
 	}
 }
 
+// AddBook menambahkan buku baru ke perpustakaan
+func (as *AdminService) AddBook(newBook *models.Book) error {
+	// Lakukan validasi data buku baru (misalnya, cek apakah ISBN sudah ada)
+	// ...
+
+	return as.bookRepository.CreateBook(newBook)
+}
+
+// UpdateBook memperbarui informasi buku yang ada
+func (as *AdminService) UpdateBook(updatedBook *models.Book) error {
+	// Lakukan validasi data buku yang diperbarui
+	// ...
+
+	return as.bookRepository.UpdateBook(updatedBook)
+}
+
+// DeleteBook menghapus buku dari perpustakaan
+func (as *AdminService) DeleteBook(bookID int) error {
+	// Anda mungkin ingin menambahkan logika untuk menangani peminjaman yang terkait dengan buku ini sebelum menghapusnya
+	// ...
+
+	return as.bookRepository.DeleteBook(bookID)
+}
+
+// GetMemberLoans mengambil riwayat peminjaman seorang anggota
+func (as *AdminService) GetMemberLoans(memberID int) ([]models.Loan, error) {
+	return as.loanRepository.GetLoansByMemberID(memberID)
+}
+
+// GetBookLoans mengambil daftar peminjaman untuk sebuah buku
+func (as *AdminService) GetBookLoans(bookID int) ([]models.Loan, error) {
+	return as.loanRepository.GetLoansByBookID(bookID)
+}
+
+// IssueFine mengenakan denda kepada anggota
+func (as *AdminService) IssueFine(memberID int, amount float64, reason string) error {
+	// 1. Ambil data anggota dari database
+	member, err := as.memberRepository.GetMemberByID(memberID)
+	if err != nil {
+		return err
+	}
+
+	// 2. Update field `FineAmount` pada struct `Member`
+	member.FineAmount += amount
+
+	// 3. Simpan perubahan ke database
+	err = as.memberRepository.UpdateMember(member)
+	if err != nil {
+		return err
+	}
+
+	// 4. Buat catatan transaksi denda di database (opsional)
+	// ...
+
+	return nil
+}
+
 // ManageUsers menangani operasi CRUD untuk pengguna (admin dan pustakawan)
-func (as *AdminService) ManageUsers(method string, user *user.User) error {
+func (as *AdminService) ManageUsers(method string, user *models.User) error {
 	switch method {
 	case "GET":
-		// Ambil daftar pengguna
-		// ...
 		return as.userRepository.GetAllUsers()
 	case "POST":
-		// Buat pengguna baru
-		// ... lakukan validasi data pengguna baru
+		// Lakukan validasi data pengguna baru (misalnya, cek apakah username sudah ada)
+		// ...
+
+		// Hash password sebelum disimpan (jika diperlukan)
+		// ...
+
 		return as.userRepository.CreateUser(user)
 	case "PUT":
-		// Perbarui pengguna
-		// ... lakukan validasi data pengguna yang diperbarui
+		// Lakukan validasi data pengguna yang diperbarui
+		// ...
+
 		return as.userRepository.UpdateUser(user)
 	case "DELETE":
-		// Hapus pengguna
-		// ...
 		return as.userRepository.DeleteUser(user.ID)
 	default:
 		return errors.New("invalid method")

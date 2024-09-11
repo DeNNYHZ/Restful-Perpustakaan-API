@@ -108,4 +108,8 @@ func (br *BookRepository) GetPersonalizedRecommendations(id int) ([]models.Book,
 	return nil, nil
 }
 
+func (br *BookRepository) GetTotalBooks() (interface{}, interface{}) {
+	return nil, nil
+}
+
 // ... (fungsi lain yang mungkin Anda butuhkan, seperti GetBooksByTitle, GetBooksByAuthor, dll.)

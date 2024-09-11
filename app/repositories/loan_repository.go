@@ -100,4 +100,31 @@ func (lr *LoanRepository) DeleteLoan(id int) error {
 	return err
 }
 
+func (lr *LoanRepository) GetLoansByMemberID(id int) ([]models.Loan, error) {
+	// Implementasi metode GetLoansByMemberID
+
+	return nil, nil
+
+}
+
+func (lr *LoanRepository) GetLoansByBookID(id int) ([]models.Loan, error) {
+	// Implementasi metode GetLoansByBookID
+
+	return nil, nil
+
+}
+
+func (lr *LoanRepository) GetTotalLoans() (interface{}, interface{}) {
+	// Implementasi metode GetTotalLoans
+
+	return nil, nil
+}
+
+func (lr *LoanRepository) GetOverdueLoans() (interface{}, interface{}) {
+	// Implementasi metode GetOverdueLoans
+
+	return nil, nil
+
+}
+
 // ... (fungsi lain yang mungkin Anda butuhkan, seperti GetLoansByMemberID, GetLoansByBookID, dll.)
