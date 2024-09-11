@@ -1,6 +1,11 @@
 package main
 
 import (
+	"Restful-Perpustakaan-API/app/book"
+	"Restful-Perpustakaan-API/app/handlers"
+	"Restful-Perpustakaan-API/app/loan"
+	"Restful-Perpustakaan-API/database"
+	"Restful-Perpustakaan-API/member"
 	"context"
 	"database/sql"
 	"fmt"
@@ -14,6 +19,12 @@ import (
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq" // PostgreSQL driver
 )
+
+func initData() {
+	database.members[1] = member.Member{ID: 1, Name: "John Doe"}
+	database.books[1] = book.Book{ID: 1, Title: "Go Programming", Author: "Alice", Genre: "Programming", Year: 2024, Rating: 4.5}
+	database.loans[1] = loan.Loan{ID: 1, BookID: 1, MemberID: 1, DueDate: time.Now().Add(-24 * time.Hour), Returned: false}
+}
 
 func main() {
 	// 1. Load configuration
@@ -43,6 +54,23 @@ func main() {
 	// 5. Register routes
 	router.HandleFunc("/books", bookHandler.GetAllBooks).Methods("GET")
 	router.HandleFunc("/books/{id}", bookHandler.GetBookByID).Methods("GET")
+	router.HandleFunc("/notifications", handlers.GetAllNotifications).Methods("GET")
+	router.HandleFunc("/notifications/{id:[0-9]+}", handlers.GetNotificationByID).Methods("GET")
+	router.HandleFunc("/notifications", handlers.CreateNotification).Methods("POST")
+	router.HandleFunc("/notifications/{id:[0-9]+}", handlers.UpdateNotification).Methods("PUT")
+	router.HandleFunc("/notifications/{id:[0-9]+}", handlers.DeleteNotification).Methods("DELETE")
+	router.HandleFunc("/notifications/{id:[0-9]+}/read", handlers.MarkNotificationAsRead).Methods("POST")
+	router.HandleFunc("/notifications/read", handlers.MarkAllNotificationsAsRead).Methods("POST")
+	router.HandleFunc("/notifications/unread/count", handlers.GetUnreadNotificationsCount).Methods("GET")
+	router.HandleFunc("/notifications/all/unread/count", handlers.GetAllUnreadNotificationsCount).Methods("GET")
+	router.HandleFunc("/notifications/count", handlers.GetAllNotificationsCount).Methods("GET")
+	router.HandleFunc("/notifications/name/{name}", handlers.GetNotificationByName).Methods("GET")
+	router.HandleFunc("/notifications/category/{category}", handlers.GetNotificationByCategory).Methods("GET")
+	router.HandleFunc("/notifications/receiver/{receiver}", handlers.GetNotificationByReceiver).Methods("GET")
+	router.HandleFunc("/notifications/sender/{sender}", handlers.GetNotificationBySender).Methods("GET")
+	router.HandleFunc("/notifications/status/{status}", handlers.GetNotificationByStatus).Methods("GET")
+	router.HandleFunc("/notifications/receiver/{receiver}/status/{status}", handlers.GetNotificationByReceiverAndStatus).Methods("GET")
+	router.HandleFunc("/notifications/receiver/{receiver}/category/{category}", handlers.GetNotificationByReceiverAndCategory).Methods("GET")
 	// ... register other routes
 
 	// Apply middleware (e.g., logging, authentication)

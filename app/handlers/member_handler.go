@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gorilla/mux"
 )
@@ -21,195 +22,242 @@ func NewMemberHandler(db *database.Database) *MemberHandler {
 }
 
 // GetAllMembers handles GET requests for all members
-func (h *MemberHandler) GetAllMembers(w http.ResponseWriter, r *http.Request) {
+// Returns a JSON response with a list of members
+func (h *MemberHandler) GetAllMembers(w http.ResponseWriter, r *http.Request) ([]member.Member, error) {
 	members, err := h.DB.GetAllMembers()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return nil, err
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(members)
+	return members, nil
 }
 
 // GetMemberByID handles GET requests for a member by ID
-func (h *MemberHandler) GetMemberByID(w http.ResponseWriter, r *http.Request) {
+// Returns a JSON response with a single member
+func (h *MemberHandler) GetMemberByID(w http.ResponseWriter, r *http.Request) (*member.Member, error) {
 	params := mux.Vars(r)
 	id, err := strconv.Atoi(params["id"])
 	if err != nil {
 		http.Error(w, "Invalid member ID", http.StatusBadRequest)
-		return
+		return nil, err
 	}
 
 	member, err := h.DB.GetMemberByID(id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
-		return
+		return nil, err
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(member)
+	return member, nil
 }
 
 // CreateMember handles POST requests to create a new member
-func (h *MemberHandler) CreateMember(w http.ResponseWriter, r *http.Request) {
+// Returns a JSON response with the created member
+func (h *MemberHandler) CreateMember(w http.ResponseWriter, r *http.Request) (*member.Member, error) {
 	var newMember member.Member
 	err := json.NewDecoder(r.Body).Decode(&newMember)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+		return nil, err
 	}
-
 	err = h.DB.CreateMember(&newMember)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return nil, err
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(newMember)
+	return &newMember, nil
 }
 
 // UpdateMember handles PUT requests to update an existing member
-func (h *MemberHandler) UpdateMember(w http.ResponseWriter, r *http.Request) {
+// Returns a JSON response with the updated member
+func (h *MemberHandler) UpdateMember(w http.ResponseWriter, r *http.Request) (*member.Member, error) {
 	params := mux.Vars(r)
 	id, err := strconv.Atoi(params["id"])
 	if err != nil {
 		http.Error(w, "Invalid member ID", http.StatusBadRequest)
-		return
+		return nil, err
 	}
 
 	var updatedMember member.Member
 	err = json.NewDecoder(r.Body).Decode(&updatedMember)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+		return nil, err
 	}
 	updatedMember.ID = id
 
 	err = h.DB.UpdateMember(&updatedMember)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return nil, err
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(updatedMember)
+	return &updatedMember, nil
 }
 
 // DeleteMember handles DELETE requests to remove a member
-func (h *MemberHandler) DeleteMember(w http.ResponseWriter, r *http.Request) {
+// Returns a JSON response with no content
+func (h *MemberHandler) DeleteMember(w http.ResponseWriter, r *http.Request) error {
 	params := mux.Vars(r)
 	id, err := strconv.Atoi(params["id"])
 	if err != nil {
 		http.Error(w, "Invalid member ID", http.StatusBadRequest)
-		return
+		return err
 	}
 
 	err = h.DB.DeleteMember(id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return err
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+	return nil
 }
 
 // GetMemberByName handles GET requests to find members by name
-func (h *MemberHandler) GetMemberByName(w http.ResponseWriter, r *http.Request) {
+// Returns a JSON response with a list of members
+func (h *MemberHandler) GetMemberByName(w http.ResponseWriter, r *http.Request) ([]member.Member, error) {
 	params := mux.Vars(r)
 	name := params["name"]
 	members, err := h.DB.GetMemberByName(name)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return nil, err
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(members)
+	return members, nil
 }
 
 // GetMemberByAddress handles GET requests to find members by address
-func (h *MemberHandler) GetMemberByAddress(w http.ResponseWriter, r *http.Request) {
+// Returns a JSON response with a list of members
+func (h *MemberHandler) GetMemberByAddress(w http.ResponseWriter, r *http.Request) ([]member.Member, error) {
 	params := mux.Vars(r)
 	address := params["address"]
 	members, err := h.DB.GetMemberByAddress(address)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return nil, err
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(members)
+	return members, nil
 }
 
 // GetMemberByPhoneNumber handles GET requests to find members by phone number
-func (h *MemberHandler) GetMemberByPhoneNumber(w http.ResponseWriter, r *http.Request) {
+// Returns a JSON response with a list of members
+func (h *MemberHandler) GetMemberByPhoneNumber(w http.ResponseWriter, r *http.Request) ([]member.Member, error) {
 	params := mux.Vars(r)
 	phoneNumber := params["phoneNumber"]
 	members, err := h.DB.GetMemberByPhoneNumber(phoneNumber)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return nil, err
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(members)
+	return members, nil
 }
 
 // GetMemberByEmail handles GET requests to find members by email
-func (h *MemberHandler) GetMemberByEmail(w http.ResponseWriter, r *http.Request) {
+// Returns a JSON response with a list of members
+func (h *MemberHandler) GetMemberByEmail(w http.ResponseWriter, r *http.Request) ([]member.Member, error) {
 	params := mux.Vars(r)
 	email := params["email"]
 	members, err := h.DB.GetMemberByEmail(email)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return nil, err
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(members)
+	return members, nil
 }
 
 // GetMemberByGender handles GET requests to find members by gender
-func (h *MemberHandler) GetMemberByGender(w http.ResponseWriter, r *http.Request) {
+// Returns a JSON response with a list of members
+func (h *MemberHandler) GetMemberByGender(w http.ResponseWriter, r *http.Request) ([]member.Member, error) {
 	params := mux.Vars(r)
 	gender := params["gender"]
 	members, err := h.DB.GetMemberByGender(gender)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return nil, err
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(members)
+	return members, nil
 }
 
 // GetMembersByMembershipType handles GET requests to find members by membership type
-func (h *MemberHandler) GetMembersByMembershipType(w http.ResponseWriter, r *http.Request) {
+// Returns a JSON response with a list of members
+func (h *MemberHandler) GetMembersByMembershipType(w http.ResponseWriter, r *http.Request) ([]member.Member, error) {
 	params := mux.Vars(r)
 	membershipType := params["membershipType"]
 	members, err := h.DB.GetMembersByMembershipType(membershipType)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return nil, err
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(members)
+	return members, nil
 }
 
 // GetMembersByRegistrationDate handles GET requests to find members by registration date
+// Returns a JSON response with a list of members
 func (h *MemberHandler) GetMembersByRegistrationDate(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	registrationDate := params["registrationDate"]
+	registrationDateStr := params["registrationDate"]
+	layout := "2006-01-02" // assuming the date format is YYYY-MM-DD
+	registrationDate, err := time.Parse(layout, registrationDateStr)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 	members, err := h.DB.GetMembersByRegistrationDate(registrationDate)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(members)
+}
 
+// GetMembersByLastLoginDate handles GET requests to find members by last login date
+// Returns a JSON response with a list of members
+func (h *MemberHandler) GetMembersByLastLoginDate(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	lastLoginDateStr := params["lastLoginDate"]
+	layout := "2006-01-02" // assuming the date format is YYYY-MM-DD
+	lastLoginDate, err := time.Parse(layout, lastLoginDateStr)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	members, err := h.DB.GetMembersByLastLoginDate(lastLoginDate)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(members)
 }

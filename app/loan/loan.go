@@ -27,6 +27,7 @@ type Loan struct {
 	BorrowDate time.Time  `json:"borrow_date"`
 	DueDate    time.Time  `json:"due_date"`
 	ReturnDate *time.Time `json:"return_date,omitempty"` // Can be null if not returned
+	Returned   bool       `json:"returned"`
 }
 
 // LoanHistory represents a loan history.

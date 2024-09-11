@@ -12,7 +12,16 @@ type Member struct {
 	Address          string    `json:"address"`
 	RegistrationDate time.Time `json:"registration_date"` // e.g., "2022-01-01T00:00:00Z"
 	MembershipType   string    `json:"membership_type"`   // e.g., "Regular", "Student", "Premium"
+	Username         string    `json:"username"`          // e.g., "johndoe"
+
 	// ... tambahkan field lain sesuai kebutuhan
+}
+
+type User struct {
+	ID       int    `json:"id"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Password string `json:"password"` // Ensure passwords are securely handled
 }
 
 type Credentials struct {

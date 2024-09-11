@@ -1,4 +1,4 @@
-package main
+package handlers
 
 import (
 	"encoding/json"
@@ -63,9 +63,9 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// Register menangani permintaan pendaftaran anggota baru.
+// Register handles new user registration requests.
 func Register(w http.ResponseWriter, r *http.Request) {
-	var newMember member.Member
+	var newMember member.Member // Use member.Member directly
 	err := json.NewDecoder(r.Body).Decode(&newMember)
 	if err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
@@ -101,7 +101,7 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	newMember.Password = string(hashedPassword)
 
 	// Simpan anggota baru ke database
-	err = database.CreateMember(&newMember)
+	err = database.CreateMember(&newMember) // Pass a pointer to member.Member
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
