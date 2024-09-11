@@ -1,8 +1,8 @@
 package handlers
 
 import (
+	"Restful-Perpustakaan-API/app/models"
 	"Restful-Perpustakaan-API/database"
-	"Restful-Perpustakaan-API/member"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -23,7 +23,7 @@ func NewMemberHandler(db *database.Database) *MemberHandler {
 
 // GetAllMembers handles GET requests for all members
 // Returns a JSON response with a list of members
-func (h *MemberHandler) GetAllMembers(w http.ResponseWriter, r *http.Request) ([]member.Member, error) {
+func (h *MemberHandler) GetAllMembers(w http.ResponseWriter, r *http.Request) ([]models.Member, error) {
 	members, err := h.DB.GetAllMembers()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -37,7 +37,7 @@ func (h *MemberHandler) GetAllMembers(w http.ResponseWriter, r *http.Request) ([
 
 // GetMemberByID handles GET requests for a member by ID
 // Returns a JSON response with a single member
-func (h *MemberHandler) GetMemberByID(w http.ResponseWriter, r *http.Request) (*member.Member, error) {
+func (h *MemberHandler) GetMemberByID(w http.ResponseWriter, r *http.Request) (*models.Member, error) {
 	params := mux.Vars(r)
 	id, err := strconv.Atoi(params["id"])
 	if err != nil {
@@ -58,8 +58,8 @@ func (h *MemberHandler) GetMemberByID(w http.ResponseWriter, r *http.Request) (*
 
 // CreateMember handles POST requests to create a new member
 // Returns a JSON response with the created member
-func (h *MemberHandler) CreateMember(w http.ResponseWriter, r *http.Request) (*member.Member, error) {
-	var newMember member.Member
+func (h *MemberHandler) CreateMember(w http.ResponseWriter, r *http.Request) (*models.Member, error) {
+	var newMember models.Member
 	err := json.NewDecoder(r.Body).Decode(&newMember)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -79,7 +79,7 @@ func (h *MemberHandler) CreateMember(w http.ResponseWriter, r *http.Request) (*m
 
 // UpdateMember handles PUT requests to update an existing member
 // Returns a JSON response with the updated member
-func (h *MemberHandler) UpdateMember(w http.ResponseWriter, r *http.Request) (*member.Member, error) {
+func (h *MemberHandler) UpdateMember(w http.ResponseWriter, r *http.Request) (*models.Member, error) {
 	params := mux.Vars(r)
 	id, err := strconv.Atoi(params["id"])
 	if err != nil {
@@ -87,7 +87,7 @@ func (h *MemberHandler) UpdateMember(w http.ResponseWriter, r *http.Request) (*m
 		return nil, err
 	}
 
-	var updatedMember member.Member
+	var updatedMember models.Member
 	err = json.NewDecoder(r.Body).Decode(&updatedMember)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -128,7 +128,7 @@ func (h *MemberHandler) DeleteMember(w http.ResponseWriter, r *http.Request) err
 
 // GetMemberByName handles GET requests to find members by name
 // Returns a JSON response with a list of members
-func (h *MemberHandler) GetMemberByName(w http.ResponseWriter, r *http.Request) ([]member.Member, error) {
+func (h *MemberHandler) GetMemberByName(w http.ResponseWriter, r *http.Request) ([]models.Member, error) {
 	params := mux.Vars(r)
 	name := params["name"]
 	members, err := h.DB.GetMemberByName(name)
@@ -144,7 +144,7 @@ func (h *MemberHandler) GetMemberByName(w http.ResponseWriter, r *http.Request) 
 
 // GetMemberByAddress handles GET requests to find members by address
 // Returns a JSON response with a list of members
-func (h *MemberHandler) GetMemberByAddress(w http.ResponseWriter, r *http.Request) ([]member.Member, error) {
+func (h *MemberHandler) GetMemberByAddress(w http.ResponseWriter, r *http.Request) ([]models.Member, error) {
 	params := mux.Vars(r)
 	address := params["address"]
 	members, err := h.DB.GetMemberByAddress(address)
@@ -160,7 +160,7 @@ func (h *MemberHandler) GetMemberByAddress(w http.ResponseWriter, r *http.Reques
 
 // GetMemberByPhoneNumber handles GET requests to find members by phone number
 // Returns a JSON response with a list of members
-func (h *MemberHandler) GetMemberByPhoneNumber(w http.ResponseWriter, r *http.Request) ([]member.Member, error) {
+func (h *MemberHandler) GetMemberByPhoneNumber(w http.ResponseWriter, r *http.Request) ([]models.Member, error) {
 	params := mux.Vars(r)
 	phoneNumber := params["phoneNumber"]
 	members, err := h.DB.GetMemberByPhoneNumber(phoneNumber)
@@ -176,7 +176,7 @@ func (h *MemberHandler) GetMemberByPhoneNumber(w http.ResponseWriter, r *http.Re
 
 // GetMemberByEmail handles GET requests to find members by email
 // Returns a JSON response with a list of members
-func (h *MemberHandler) GetMemberByEmail(w http.ResponseWriter, r *http.Request) ([]member.Member, error) {
+func (h *MemberHandler) GetMemberByEmail(w http.ResponseWriter, r *http.Request) ([]models.Member, error) {
 	params := mux.Vars(r)
 	email := params["email"]
 	members, err := h.DB.GetMemberByEmail(email)
@@ -192,7 +192,7 @@ func (h *MemberHandler) GetMemberByEmail(w http.ResponseWriter, r *http.Request)
 
 // GetMemberByGender handles GET requests to find members by gender
 // Returns a JSON response with a list of members
-func (h *MemberHandler) GetMemberByGender(w http.ResponseWriter, r *http.Request) ([]member.Member, error) {
+func (h *MemberHandler) GetMemberByGender(w http.ResponseWriter, r *http.Request) ([]models.Member, error) {
 	params := mux.Vars(r)
 	gender := params["gender"]
 	members, err := h.DB.GetMemberByGender(gender)
@@ -208,7 +208,7 @@ func (h *MemberHandler) GetMemberByGender(w http.ResponseWriter, r *http.Request
 
 // GetMembersByMembershipType handles GET requests to find members by membership type
 // Returns a JSON response with a list of members
-func (h *MemberHandler) GetMembersByMembershipType(w http.ResponseWriter, r *http.Request) ([]member.Member, error) {
+func (h *MemberHandler) GetMembersByMembershipType(w http.ResponseWriter, r *http.Request) ([]models.Member, error) {
 	params := mux.Vars(r)
 	membershipType := params["membershipType"]
 	members, err := h.DB.GetMembersByMembershipType(membershipType)

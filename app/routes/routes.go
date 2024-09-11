@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/gorilla/mux"
+	"net/http"
 
 	book_handler "Restful-Perpustakaan-API/app/handlers/book_handler"
 )
@@ -62,6 +63,9 @@ func SetupRoutes(r *mux.Router) {
 	r.HandleFunc("/search", search_handler.Search).Methods("GET")                // Pencarian global
 	r.HandleFunc("/contact", contact_handler.SendContactMessage).Methods("POST") // Mengirim pesan kontak
 	r.HandleFunc("/", home_handler.GetHomePage).Methods("GET")                   // Halaman utama
+
+	// Rute yang dilindungi
+	r.Handle("/protected", AuthMiddleware(http.HandlerFunc(protectedHandler))).Methods("GET")
 
 	// tambahkan rute lain sesuai kebutuhan API Anda
 }

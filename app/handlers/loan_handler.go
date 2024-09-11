@@ -1,21 +1,21 @@
 package handlers
 
 import (
+	"Restful-Perpustakaan-API/app/models"
 	"encoding/json"
 	"net/http"
 	"strconv"
 
-	"Restful-Perpustakaan-API/app/loan"
 	"github.com/gorilla/mux"
 )
 
 // LoanHandlers holds the handlers for loan-related endpoints
 type LoanHandlers struct {
-	loanService loan.LoanService
+	loanService models.LoanService
 }
 
 // NewLoanHandlers returns a new instance of LoanHandlers
-func NewLoanHandlers(loanService loan.LoanService) *LoanHandlers {
+func NewLoanHandlers(loanService models.LoanService) *LoanHandlers {
 	return &LoanHandlers{loanService: loanService}
 }
 
@@ -46,7 +46,7 @@ func (lh *LoanHandlers) GetLoanByID(w http.ResponseWriter, r *http.Request) {
 
 // CreateLoan handles POST requests to create a new loan
 func (lh *LoanHandlers) CreateLoan(w http.ResponseWriter, r *http.Request) {
-	var newLoan loan.Loan
+	var newLoan models.Loan
 	err := json.NewDecoder(r.Body).Decode(&newLoan)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -68,7 +68,7 @@ func (lh *LoanHandlers) UpdateLoan(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid loan ID", http.StatusBadRequest)
 		return
 	}
-	var updatedLoan loan.Loan
+	var updatedLoan models.Loan
 	err = json.NewDecoder(r.Body).Decode(&updatedLoan)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)

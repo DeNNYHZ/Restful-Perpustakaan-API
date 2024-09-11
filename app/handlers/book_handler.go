@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"Restful-Perpustakaan-API/app/book"
+	"Restful-Perpustakaan-API/app/models"
 	"Restful-Perpustakaan-API/database"
 	"encoding/json"
 	"net/http"
@@ -71,7 +71,7 @@ func GetBookByID(w http.ResponseWriter, r *http.Request) {
 
 // CreateBook adds a new book to the database.
 func CreateBook(w http.ResponseWriter, r *http.Request) {
-	var newBook book.Book
+	var newBook models.Book
 	err := json.NewDecoder(r.Body).Decode(&newBook)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -98,7 +98,7 @@ func UpdateBook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var updatedBook book.Book
+	var updatedBook models.Book
 	err = json.NewDecoder(r.Body).Decode(&updatedBook)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)

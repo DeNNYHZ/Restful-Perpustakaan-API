@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"Restful-Perpustakaan-API/app/models"
 	"encoding/json"
 	"net/http"
 	"regexp"
@@ -8,14 +9,13 @@ import (
 	"time"
 
 	"Restful-Perpustakaan-API/database"
-	"Restful-Perpustakaan-API/member"
 	"github.com/dgrijalva/jwt-go"
 	"golang.org/x/crypto/bcrypt"
 )
 
 // Login menangani permintaan login anggota.
 func Login(w http.ResponseWriter, r *http.Request) {
-	var credentials member.Credentials
+	var credentials models.Credentials
 	err := json.NewDecoder(r.Body).Decode(&credentials)
 	if err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
@@ -65,7 +65,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 // Register handles new user registration requests.
 func Register(w http.ResponseWriter, r *http.Request) {
-	var newMember member.Member // Use member.Member directly
+	var newMember models.Member // Use member.Member directly
 	err := json.NewDecoder(r.Body).Decode(&newMember)
 	if err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)

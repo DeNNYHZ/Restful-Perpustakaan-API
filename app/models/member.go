@@ -1,4 +1,4 @@
-package member
+package models
 
 import "time"
 
@@ -13,6 +13,7 @@ type Member struct {
 	RegistrationDate time.Time `json:"registration_date"` // e.g., "2022-01-01T00:00:00Z"
 	MembershipType   string    `json:"membership_type"`   // e.g., "Regular", "Student", "Premium"
 	Username         string    `json:"username"`          // e.g., "johndoe"
+	Gender           string    `json:"gender"`            // e.g., "Male", "Female", "Other" or any
 
 	// ... tambahkan field lain sesuai kebutuhan
 }

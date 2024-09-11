@@ -1,4 +1,4 @@
-package notification
+package models
 
 import "time"
 
@@ -14,4 +14,5 @@ type Notification struct {
 	Category  string    `json:"category" :"category"`
 	Receiver  string    `json:"receiver" :"receiver"`
 	Sender    string    `json:"sender" : sender"`
+	Status    string    `json:"status" :"status"`
 }

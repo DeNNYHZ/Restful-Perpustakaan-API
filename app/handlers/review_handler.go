@@ -1,12 +1,12 @@
 package handlers
 
 import (
+	"Restful-Perpustakaan-API/app/models"
 	"encoding/json"
 	"net/http"
 	"strconv"
 
 	"Restful-Perpustakaan-API/database" // Ganti dengan path yang sesuai
-	"Restful-Perpustakaan-API/review"   // Ganti dengan path yang sesuai
 	"github.com/gorilla/mux"
 )
 
@@ -43,7 +43,7 @@ func GetReviewByID(w http.ResponseWriter, r *http.Request) {
 
 // CreateReview membuat ulasan baru dari data JSON yang diterima dalam request body dan menyimpannya ke database.
 func CreateReview(w http.ResponseWriter, r *http.Request) {
-	var newReview review.Review
+	var newReview models.Review
 	err := json.NewDecoder(r.Body).Decode(&newReview)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -70,7 +70,7 @@ func UpdateReview(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var updatedReview review.Review
+	var updatedReview models.Review
 	err = json.NewDecoder(r.Body).Decode(&updatedReview)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)

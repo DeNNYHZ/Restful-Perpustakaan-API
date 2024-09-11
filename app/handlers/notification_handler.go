@@ -1,8 +1,8 @@
 package handlers
 
 import (
+	"Restful-Perpustakaan-API/app/models"
 	"Restful-Perpustakaan-API/database"
-	"Restful-Perpustakaan-API/notification"
 	"encoding/json"
 	"github.com/gorilla/mux"
 	"net/http"
@@ -42,7 +42,7 @@ func GetNotificationByID(w http.ResponseWriter, r *http.Request) {
 
 // CreateNotification creates a new notification from the request body and saves it to the database.
 func CreateNotification(w http.ResponseWriter, r *http.Request) {
-	var newNotification notification.Notification
+	var newNotification models.Notification
 	err := json.NewDecoder(r.Body).Decode(&newNotification)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -69,7 +69,7 @@ func UpdateNotification(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var updatedNotification notification.Notification
+	var updatedNotification models.Notification
 	err = json.NewDecoder(r.Body).Decode(&updatedNotification)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -217,6 +217,47 @@ func GetNotificationBySender(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	sender := params["sender"]
 	notifications, err := database.GetNotificationBySender(sender)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(notifications)
+}
+
+// GetNotificationByStatus retrieves a notification by status from the database.
+func GetNotificationByStatus(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	status := params["status"]
+	_, err := database.GetNotificationByStatus(status)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+// GetNotificationByReceiverAndStatus retrieves a notification by receiver and status from the database.
+func GetNotificationByReceiverAndStatus(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	receiver := params["receiver"]
+	status := params["status"]
+	notifications, err := database.GetNotificationByReceiverAndStatus(receiver, status)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(notifications)
+}
+
+// GetNotificationByReceiverAndCategory retrieves a notification by receiver and category from the database.
+func GetNotificationByReceiverAndCategory(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	receiver := params["receiver"]
+	category := params["category"]
+	notifications, err := database.GetNotificationByReceiverAndCategory(receiver, category)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

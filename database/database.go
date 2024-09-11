@@ -1,12 +1,8 @@
 package database
 
 import (
-	"Restful-Perpustakaan-API/app/book"
-	"Restful-Perpustakaan-API/app/loan"
+	"Restful-Perpustakaan-API/app/models"
 	"Restful-Perpustakaan-API/app/user"
-	"Restful-Perpustakaan-API/member"
-	"Restful-Perpustakaan-API/notification"
-	"Restful-Perpustakaan-API/review"
 	"database/sql"
 	"errors"
 	"sync"
@@ -61,7 +57,7 @@ type Database struct {
 	loans         []Loan
 	loanHistory   []LoanHistory
 	notifications []Notification
-	reviews       []review.Review
+	reviews       []models.Review
 }
 
 // Notification represents a notification to a user
@@ -408,26 +404,31 @@ func (db *Database) GetMembersByLastLoginDate(date time.Time) (interface{}, inte
 
 }
 
+// GetAllMembers returns all members
+func (db *Database) GetAllMembers() ([]Member, error) {
+	return db.members, nil
+}
+
 var (
-	notifications = map[int]notification.Notification{}
+	notifications = map[int]models.Notification{}
 	nextID        = 1
 	mu            sync.Mutex
-	reviews       = map[int]review.Review{}
+	reviews       = map[int]models.Review{}
 	nextReviewID  = 1
 	nextUserID    = 1
 )
 
-func GetAllNotifications() ([]notification.Notification, error) {
+func GetAllNotifications() ([]models.Notification, error) {
 	mu.Lock()
 	defer mu.Unlock()
-	var result []notification.Notification
+	var result []models.Notification
 	for _, notif := range notifications {
 		result = append(result, notif)
 	}
 	return result, nil
 }
 
-func GetNotificationByID(id int) (*notification.Notification, error) {
+func GetNotificationByID(id int) (*models.Notification, error) {
 	mu.Lock()
 	defer mu.Unlock()
 	notif, exists := notifications[id]
@@ -437,7 +438,7 @@ func GetNotificationByID(id int) (*notification.Notification, error) {
 	return &notif, nil
 }
 
-func CreateNotification(notif *notification.Notification) error {
+func CreateNotification(notif *models.Notification) error {
 	mu.Lock()
 	defer mu.Unlock()
 	notif.ID = nextID
@@ -446,7 +447,7 @@ func CreateNotification(notif *notification.Notification) error {
 	return nil
 }
 
-func UpdateNotification(notif *notification.Notification) error {
+func UpdateNotification(notif *models.Notification) error {
 	mu.Lock()
 	defer mu.Unlock()
 	_, exists := notifications[notif.ID]
@@ -513,7 +514,7 @@ func GetAllNotificationsCount() (int, error) {
 }
 
 // GetNotificationByName returns a notification by name
-func GetNotificationByName(name string) (*notification.Notification, error) {
+func GetNotificationByName(name string) (*models.Notification, error) {
 	mu.Lock()
 	defer mu.Unlock()
 	for _, notif := range notifications {
@@ -525,7 +526,7 @@ func GetNotificationByName(name string) (*notification.Notification, error) {
 }
 
 // GetNotificationByCategory returns a notification by category
-func GetNotificationByCategory(category string) (*notification.Notification, error) {
+func GetNotificationByCategory(category string) (*models.Notification, error) {
 	mu.Lock()
 	defer mu.Unlock()
 	for _, notif := range notifications {
@@ -537,7 +538,7 @@ func GetNotificationByCategory(category string) (*notification.Notification, err
 }
 
 // GetNotificationByReceiver returns a notification by receiver
-func GetNotificationByReceiver(receiver string) (*notification.Notification, error) {
+func GetNotificationByReceiver(receiver string) (*models.Notification, error) {
 	mu.Lock()
 	defer mu.Unlock()
 	for _, notif := range notifications {
@@ -549,7 +550,7 @@ func GetNotificationByReceiver(receiver string) (*notification.Notification, err
 }
 
 // GetNotificationBySender returns a notification by sender
-func GetNotificationBySender(sender string) (*notification.Notification, error) {
+func GetNotificationBySender(sender string) (*models.Notification, error) {
 	mu.Lock()
 	defer mu.Unlock()
 	for _, notif := range notifications {
@@ -561,7 +562,7 @@ func GetNotificationBySender(sender string) (*notification.Notification, error) 
 }
 
 // GetRecommendations mengambil rekomendasi buku umum dari database.
-func GetRecommendations(db *sql.DB) ([]book.Book, error) {
+func GetRecommendations(db *sql.DB) ([]models.Book, error) {
 	// Query untuk mengambil buku-buku dengan rating tertinggi, misalnya 10 buku teratas
 	query := "SELECT * FROM books ORDER BY rating DESC LIMIT 10"
 
@@ -571,9 +572,9 @@ func GetRecommendations(db *sql.DB) ([]book.Book, error) {
 	}
 	defer rows.Close()
 
-	var recommendations []book.Book
+	var recommendations []models.Book
 	for rows.Next() {
-		var b book.Book
+		var b models.Book
 		// Pastikan kolom-kolom dalam query sesuai dengan field-field dalam struct book.Book
 		err := rows.Scan(&b.ID, &b.Title, &b.Author, &b.Genre, &b.Year, &b.Rating)
 		if err != nil {
@@ -590,7 +591,7 @@ func GetRecommendations(db *sql.DB) ([]book.Book, error) {
 }
 
 // GetPersonalizedRecommendations mengambil rekomendasi buku yang dipersonalisasi berdasarkan ID anggota
-func GetPersonalizedRecommendations(db *sql.DB, memberID int) ([]book.Book, error) {
+func GetPersonalizedRecommendations(db *sql.DB, memberID int) ([]models.Book, error) {
 	// Query untuk mengambil buku-buku yang pernah dipinjam oleh anggota
 	queryBorrowedBooks := "SELECT book_id FROM borrowed_books WHERE member_id = ?"
 
@@ -623,7 +624,7 @@ func GetPersonalizedRecommendations(db *sql.DB, memberID int) ([]book.Book, erro
 		return nil, err
 	}
 
-	var recommendations []book.Book
+	var recommendations []models.Book
 	// Loop melalui genre-genre yang pernah dipinjam oleh anggota
 	for genre, count := range genreMap {
 		if count > 1 { // Hanya pertimbangkan genre yang dipinjam lebih dari sekali
@@ -637,7 +638,7 @@ func GetPersonalizedRecommendations(db *sql.DB, memberID int) ([]book.Book, erro
 			defer genreRows.Close()
 
 			for genreRows.Next() {
-				var b book.Book
+				var b models.Book
 				err := genreRows.Scan(&b.ID, &b.Title, &b.Author, &b.Genre, &b.Year, &b.Rating)
 				if err != nil {
 					return nil, err
@@ -664,17 +665,17 @@ func GetPersonalizedRecommendations(db *sql.DB, memberID int) ([]book.Book, erro
 }
 
 var (
-	books      = map[int]book.Book{}
+	books      = map[int]models.Book{}
 	nextBookID = 1
-	members    = map[int]member.Member{}
-	loans      = map[int]loan.Loan{}
+	members    = map[int]models.Member{}
+	loans      = map[int]models.Loan{}
 )
 
 // GetAllBooks retrieves all books from the database.
-func GetAllBooks() ([]book.Book, error) {
+func GetAllBooks() ([]models.Book, error) {
 	mu.Lock()
 	defer mu.Unlock()
-	var result []book.Book
+	var result []models.Book
 	for _, b := range books {
 		result = append(result, b)
 	}
@@ -682,7 +683,7 @@ func GetAllBooks() ([]book.Book, error) {
 }
 
 // GetBookByID retrieves a book by its ID.
-func GetBookByID(id int) (*book.Book, error) {
+func GetBookByID(id int) (*models.Book, error) {
 	mu.Lock()
 	defer mu.Unlock()
 	b, exists := books[id]
@@ -693,7 +694,7 @@ func GetBookByID(id int) (*book.Book, error) {
 }
 
 // CreateBook adds a new book to the database.
-func CreateBook(b *book.Book) error {
+func CreateBook(b *models.Book) error {
 	mu.Lock()
 	defer mu.Unlock()
 	b.ID = nextBookID
@@ -703,7 +704,7 @@ func CreateBook(b *book.Book) error {
 }
 
 // UpdateBook updates an existing book in the database.
-func UpdateBook(b *book.Book) error {
+func UpdateBook(b *models.Book) error {
 	mu.Lock()
 	defer mu.Unlock()
 	_, exists := books[b.ID]
@@ -727,10 +728,10 @@ func DeleteBook(id int) error {
 }
 
 // GetAllReviews retrieves all reviews from the database.
-func GetAllReviews() ([]review.Review, error) {
+func GetAllReviews() ([]models.Review, error) {
 	mu.Lock()
 	defer mu.Unlock()
-	var result []review.Review
+	var result []models.Review
 	for _, r := range reviews {
 		result = append(result, r)
 	}
@@ -738,7 +739,7 @@ func GetAllReviews() ([]review.Review, error) {
 }
 
 // GetReviewsByID retrieves a review by its ID.
-func GetReviewByID(id int) (*review.Review, error) {
+func GetReviewByID(id int) (*models.Review, error) {
 	mu.Lock()
 	defer mu.Unlock()
 	r, exists := reviews[id]
@@ -749,7 +750,7 @@ func GetReviewByID(id int) (*review.Review, error) {
 }
 
 // CreateReview adds a new review to the database.
-func CreateReview(r *review.Review) error {
+func CreateReview(r *models.Review) error {
 	mu.Lock()
 	defer mu.Unlock()
 	r.ID = nextReviewID
@@ -759,7 +760,7 @@ func CreateReview(r *review.Review) error {
 }
 
 // UpdateReview updates an existing review in the database.
-func UpdateReview(r *review.Review) error {
+func UpdateReview(r *models.Review) error {
 	mu.Lock()
 	defer mu.Unlock()
 	_, exists := reviews[r.ID]
@@ -783,10 +784,10 @@ func DeleteReview(id int) error {
 }
 
 // GetReviewsByBookID retrieves all reviews for a given book ID.
-func GetReviewsByBookID(bookID int) ([]review.Review, error) {
+func GetReviewsByBookID(bookID int) ([]models.Review, error) {
 	mu.Lock()
 	defer mu.Unlock()
-	var result []review.Review
+	var result []models.Review
 	for _, r := range reviews {
 		if r.BookID == bookID {
 			result = append(result, r)
@@ -830,7 +831,7 @@ func GetOverdueLoans() (int, error) {
 }
 
 // Helper function to check if a loan is overdue
-func isOverdue(l loan.Loan) bool {
+func isOverdue(l models.Loan) bool {
 	return time.Now().After(l.DueDate) && !l.Returned
 }
 
@@ -856,7 +857,7 @@ func UpdateUser(u *user.User) error {
 	}
 
 	// Convert user.User to member.Member
-	var m member.Member
+	var m models.Member
 	m.ID = u.ID
 	m.Name = u.Name
 	m.Email = u.Email
@@ -867,10 +868,10 @@ func UpdateUser(u *user.User) error {
 }
 
 // GetReviewsForBook retrieves all reviews for a given book ID.
-func GetReviewsForBook(bookID int) ([]review.Review, error) {
+func GetReviewsForBook(bookID int) ([]models.Review, error) {
 	mu.Lock()
 	defer mu.Unlock()
-	var result []review.Review
+	var result []models.Review
 	for _, r := range reviews {
 		if r.BookID == bookID {
 			result = append(result, r)
@@ -880,7 +881,7 @@ func GetReviewsForBook(bookID int) ([]review.Review, error) {
 }
 
 // CreateUser adds a new user to the database.
-func CreateUser(m *member.Member) error {
+func CreateUser(m *models.Member) error {
 	mu.Lock()
 	defer mu.Unlock()
 
@@ -897,7 +898,7 @@ func CreateUser(m *member.Member) error {
 }
 
 // CreateUser adds a new user to the database.
-func CreateMember(m *member.Member) error {
+func CreateMember(m *models.Member) error {
 	mu.Lock()
 	defer mu.Unlock()
 	nextMemberID := len(members) + 1
@@ -908,10 +909,10 @@ func CreateMember(m *member.Member) error {
 }
 
 // GetLoanReport
-func GetLoanReport(startDate, endDate time.Time) ([]loan.Loan, error) {
+func GetLoanReport(startDate, endDate time.Time) ([]models.Loan, error) {
 	mu.Lock()
 	defer mu.Unlock()
-	var result []loan.Loan
+	var result []models.Loan
 	for _, l := range loans {
 		if l.DueDate.After(startDate) && l.DueDate.Before(endDate) {
 			result = append(result, l)
@@ -937,7 +938,7 @@ func GetAllUsers() ([]user.User, error) {
 }
 
 // UpdateMember updates an existing member in the database.
-func UpdateMember(m *member.Member) error {
+func UpdateMember(m *models.Member) error {
 	mu.Lock()
 	defer mu.Unlock()
 	_, exists := members[m.ID]
@@ -949,7 +950,7 @@ func UpdateMember(m *member.Member) error {
 }
 
 // GetMemberByEmail retrieves a member by email.
-func GetMemberByEmail(email string) (*member.Member, error) {
+func GetMemberByEmail(email string) (*models.Member, error) {
 	mu.Lock() // Lock the mutex to prevent concurrent access
 	defer mu.Unlock()
 	for _, m := range members {
@@ -958,4 +959,32 @@ func GetMemberByEmail(email string) (*member.Member, error) {
 		}
 	}
 	return nil, errors.New("member not found")
+}
+
+// GetNotificationByReceiverAndCategory retrieves a notification by receiver and category.
+func GetNotificationByReceiverAndCategory(receiver string, category string) (*models.Notification, error) {
+	mu.Lock()
+	defer mu.Unlock()
+	for _, n := range notifications {
+		if n.Receiver == receiver && n.Category == category {
+			return &n, nil
+		}
+	}
+	return nil, errors.New("notification not found")
+}
+
+// GetNotificationByStatus retrieves a notification by status.
+func GetNotificationByStatus(status string) ([]models.Notification, error) {
+	mu.Lock()
+	defer mu.Unlock()
+	var result []models.Notification
+	for _, n := range notifications {
+		if n.Status == status {
+			result = append(result, n)
+		}
+	}
+	if len(result) == 0 {
+		return nil, errors.New("notification not found")
+	}
+	return result, nil
 }

@@ -1,11 +1,11 @@
 package main
 
 import (
-	"Restful-Perpustakaan-API/app/book"
 	"Restful-Perpustakaan-API/app/handlers"
-	"Restful-Perpustakaan-API/app/loan"
+	"Restful-Perpustakaan-API/app/middleware"
+	"Restful-Perpustakaan-API/app/repositories"
+	"Restful-Perpustakaan-API/app/services"
 	"Restful-Perpustakaan-API/database"
-	"Restful-Perpustakaan-API/member"
 	"context"
 	"database/sql"
 	"fmt"
@@ -20,12 +20,6 @@ import (
 	_ "github.com/lib/pq" // PostgreSQL driver
 )
 
-func initData() {
-	database.members[1] = member.Member{ID: 1, Name: "John Doe"}
-	database.books[1] = book.Book{ID: 1, Title: "Go Programming", Author: "Alice", Genre: "Programming", Year: 2024, Rating: 4.5}
-	database.loans[1] = loan.Loan{ID: 1, BookID: 1, MemberID: 1, DueDate: time.Now().Add(-24 * time.Hour), Returned: false}
-}
-
 func main() {
 	// 1. Load configuration
 	cfg, err := config.LoadConfig()
@@ -34,15 +28,15 @@ func main() {
 	}
 
 	// 2. Connect to database
-	db, err := sql.Open("postgres", fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBPassword, cfg.DBName))
+	db, err := sql.Open("postgres", "postgres://user:password@localhost/library?sslmode=disable")
 	if err != nil {
-		log.Fatal("Failed to connect to database:", err)
+		log.Fatal(err)
 	}
 	defer db.Close()
 
 	// 3. Initialize repositories, services, and handlers
 	bookRepository := repositories.NewBookRepository(db)
+	reviewRepo := database.NewReviewRepository(db)
 	bookService := services.NewBookService(bookRepository)
 	bookHandler := handlers.NewBookHandler(bookService)
 

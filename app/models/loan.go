@@ -1,4 +1,4 @@
-package loan
+package models
 
 import (
 	"Restful-Perpustakaan-API/database"
@@ -40,56 +40,12 @@ type LoanHistory struct {
 	ReturnDate *time.Time `json:"return_date,omitempty"` // Can be null if not returned
 }
 
-// Member represents a library member.
-type Member struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
-}
-
-// Book represents a book in the library.
-type Book struct {
-	ID     int    `json:"id"`
-	Title  string `json:"title"`
-	Author string `json:"author"`
-}
-
 // Simulate storage with maps for quick lookups.
 var (
 	loans       = make(map[int]Loan)
 	loanHistory = make(map[int]LoanHistory)
-	members     = make(map[int]Member)
 	books       = make(map[int]Book)
 )
-
-// Helper function to generate new IDs.
-func generateID(m interface{}) int {
-	switch m := m.(type) {
-	case map[int]Member:
-		if len(m) == 0 {
-			return 1
-		}
-		var maxID int
-		for id := range m {
-			if id > maxID {
-				maxID = id
-			}
-		}
-		return maxID + 1
-	case map[int]Book:
-		if len(m) == 0 {
-			return 1
-		}
-		var maxID int
-		for id := range m {
-			if id > maxID {
-				maxID = id
-			}
-		}
-		return maxID + 1
-	default:
-		return 1
-	}
-}
 
 // GetAllMembers handles GET requests for all members.
 func GetAllMembers(w http.ResponseWriter, r *http.Request) {
