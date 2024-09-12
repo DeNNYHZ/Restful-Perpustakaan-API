@@ -9,6 +9,9 @@ import (
 	_ "github.com/lib/pq" // Import driver PostgreSQL
 )
 
+var errNotFound = errors.New("review not found")
+var reviewRepo *ReviewRepository
+
 // ReviewRepository provides methods for interacting with review data in the database
 type ReviewRepository struct {
 	db *sql.DB

@@ -2,7 +2,6 @@ package database
 
 import (
 	"Restful-Perpustakaan-API/app/models"
-	"Restful-Perpustakaan-API/app/user"
 	"database/sql"
 	"errors"
 	"sync"
@@ -848,7 +847,7 @@ func DeleteUser(id int) error {
 }
 
 // UpdateUser updates an existing user in the database.
-func UpdateUser(u *user.User) error {
+func UpdateUser(u *models.User) error {
 	mu.Lock()
 	defer mu.Unlock()
 	_, exists := members[u.ID]
@@ -922,12 +921,12 @@ func GetLoanReport(startDate, endDate time.Time) ([]models.Loan, error) {
 }
 
 // GetAllUsers retrieves all users from the database.
-func GetAllUsers() ([]user.User, error) {
+func GetAllUsers() ([]models.User, error) {
 	mu.Lock()
 	defer mu.Unlock()
-	var users []user.User
+	var users []models.User
 	for _, m := range members {
-		users = append(users, user.User{
+		users = append(users, models.User{
 			ID:       m.ID,
 			Name:     m.Name,
 			Email:    m.Email,

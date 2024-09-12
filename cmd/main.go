@@ -1,11 +1,6 @@
 package main
 
 import (
-	"Restful-Perpustakaan-API/app/handlers"
-	"Restful-Perpustakaan-API/app/middleware"
-	"Restful-Perpustakaan-API/app/repositories"
-	"Restful-Perpustakaan-API/app/services"
-	"Restful-Perpustakaan-API/database"
 	"context"
 	"database/sql"
 	"fmt"
@@ -16,75 +11,140 @@ import (
 	"time"
 
 	"Restful-Perpustakaan-API/app/config"
+	"Restful-Perpustakaan-API/app/handlers"
+	"Restful-Perpustakaan-API/app/middleware"
+	"Restful-Perpustakaan-API/app/repositories"
+	"Restful-Perpustakaan-API/app/services"
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq" // PostgreSQL driver
 )
 
+// main is the entry point of the application.
 func main() {
-	// 1. Load configuration
 	cfg, err := config.LoadConfig()
 	if err != nil {
-		log.Fatal("Failed to load configuration:", err)
+		log.Fatal(err)
 	}
 
-	// 2. Connect to database
-	db, err := sql.Open("postgres", "postgres://user:password@localhost/library?sslmode=disable")
+	db, err := sql.Open("postgres", cfg.DatabaseURL)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
 
-	// 3. Initialize repositories, services, and handlers
-	bookRepository := repositories.NewBookRepository(db)
-	reviewRepo := database.NewReviewRepository(db)
-	bookService := services.NewBookService(bookRepository)
-	bookHandler := handlers.NewBookHandler(bookService)
+	repos := initializeRepositories(db)
+	services := initializeServices(repos, cfg)
+	handlers := initializeHandlers(services)
 
-	// ... initialize other repositories, services, and handlers
-
-	// 4. Initialize router
 	router := mux.NewRouter()
+	registerRoutes(router, handlers)
 
-	// 5. Register routes
-	router.HandleFunc("/books", bookHandler.GetAllBooks).Methods("GET")
-	router.HandleFunc("/books/{id}", bookHandler.GetBookByID).Methods("GET")
-	router.HandleFunc("/notifications", handlers.GetAllNotifications).Methods("GET")
-	router.HandleFunc("/notifications/{id:[0-9]+}", handlers.GetNotificationByID).Methods("GET")
-	router.HandleFunc("/notifications", handlers.CreateNotification).Methods("POST")
-	router.HandleFunc("/notifications/{id:[0-9]+}", handlers.UpdateNotification).Methods("PUT")
-	router.HandleFunc("/notifications/{id:[0-9]+}", handlers.DeleteNotification).Methods("DELETE")
-	router.HandleFunc("/notifications/{id:[0-9]+}/read", handlers.MarkNotificationAsRead).Methods("POST")
-	router.HandleFunc("/notifications/read", handlers.MarkAllNotificationsAsRead).Methods("POST")
-	router.HandleFunc("/notifications/unread/count", handlers.GetUnreadNotificationsCount).Methods("GET")
-	router.HandleFunc("/notifications/all/unread/count", handlers.GetAllUnreadNotificationsCount).Methods("GET")
-	router.HandleFunc("/notifications/count", handlers.GetAllNotificationsCount).Methods("GET")
-	router.HandleFunc("/notifications/name/{name}", handlers.GetNotificationByName).Methods("GET")
-	router.HandleFunc("/notifications/category/{category}", handlers.GetNotificationByCategory).Methods("GET")
-	router.HandleFunc("/notifications/receiver/{receiver}", handlers.GetNotificationByReceiver).Methods("GET")
-	router.HandleFunc("/notifications/sender/{sender}", handlers.GetNotificationBySender).Methods("GET")
-	router.HandleFunc("/notifications/status/{status}", handlers.GetNotificationByStatus).Methods("GET")
-	router.HandleFunc("/notifications/receiver/{receiver}/status/{status}", handlers.GetNotificationByReceiverAndStatus).Methods("GET")
-	router.HandleFunc("/notifications/receiver/{receiver}/category/{category}", handlers.GetNotificationByReceiverAndCategory).Methods("GET")
-	// ... register other routes
+	log.Fatal(startServer(router, cfg))
+}
 
-	// Apply middleware (e.g., logging, authentication)
-	router.Use(middleware.LoggingMiddleware)
-	// ... apply other middleware
+// initializeRepositories initializes the repositories with the given database connection.
+func initializeRepositories(db *sql.DB) map[string]repositories.Repository {
+	repos := make(map[string]repositories.Repository)
 
-	// 6. Start server
+	repos["book"] = repositories.NewBookRepository(db)
+	repos["member"] = repositories.NewMemberRepository(db)
+	repos["loan"] = repositories.NewLoanRepository(db)
+	repos["notification"] = repositories.NewNotificationRepository(db)
+	repos["review"] = repositories.NewReviewRepository(db)
+
+	return repos
+}
+
+// initializeServices initializes the services with the given repositories and configuration.
+func initializeServices(repos map[string]repositories.Repository, cfg config.Config) map[string]services.Service {
+	services := make(map[string]services.Service)
+
+	services["book"] = services.NewBookService(repos["book"].(repositories.BookRepository))
+	services["member"] = services.NewMemberService(repos["member"])
+	services["loan"] = services.NewLoanService(repos["loan"])
+	services["notification"] = services.NewNotificationService(repos["notification"])
+	services["review"] = services.NewReviewService(repos["review"])
+	services["auth"] = services.NewAuthService(repos["member"], []byte(cfg.JWTSecretKey))
+	services["admin"] = services.NewAdminService(repos["member"], repos["book"], repos["member"], repos["loan"])
+
+	return services
+}
+
+// initializeHandlers initializes the handlers with the given services.
+func initializeHandlers(services map[string]services.Service) map[string]handlers.Handler {
+	handlers := make(map[string]handlers.Handler)
+
+	handlers["book"] = handlers.NewBookHandler(services["book"])
+	handlers["member"] = handlers.NewMemberHandler(services["member"])
+	handlers["loan"] = handlers.NewLoanHandler(services["loan"])
+	handlers["notification"] = handlers.NewNotificationHandler(services["notification"])
+	handlers["review"] = handlers.NewReviewHandler(services["review"])
+	handlers["auth"] = handlers.NewAuthHandler(services["auth"])
+	handlers["admin"] = handlers.NewAdminHandler(services["admin"])
+
+	return handlers
+}
+
+// registerRoutes registers the routes with the given router and handlers.
+func registerRoutes(router *mux.Router, handlers map[string]handlers.Handler) {
+	// Book routes
+	router.HandleFunc("/books", handlers["book"].GetAllBooks).Methods("GET")
+	router.HandleFunc("/books/{id}", handlers["book"].GetBookByID).Methods("GET")
+	router.HandleFunc("/books/search", handlers["book"].SearchBooks).Methods("GET")
+	router.HandleFunc("/books/{id}/reviews", handlers["review"].GetReviewsForBook).Methods("GET")
+
+	// Member routes
+	router.HandleFunc("/members", handlers["member"].GetAllMembers).Methods("GET")
+	router.HandleFunc("/members/{id}", handlers["member"].GetMemberByID).Methods("GET")
+	router.HandleFunc("/members/search", handlers["member"].SearchMembers).Methods("GET")
+	router.HandleFunc("/members/{id}/loans", handlers["loan"].GetLoansByMemberID).Methods("GET")
+
+	// Loan routes
+	router.HandleFunc("/loans", handlers["loan"].GetAllLoans).Methods("GET")
+	router.HandleFunc("/loans/{id}", handlers["loan"].GetLoanByID).Methods("GET")
+	router.HandleFunc("/loans/overdue", handlers["loan"].GetOverdueLoans).Methods("GET")
+	router.HandleFunc("/loans/member/{memberId}", handlers["loan"].GetLoansByMemberID).Methods("GET")
+
+	// Notification routes
+	router.HandleFunc("/notifications", handlers["notification"].GetAllNotifications).Methods("GET")
+	router.HandleFunc("/notifications/member/{memberId}", handlers["notification"].GetNotificationsByMemberID).Methods("GET")
+
+	// Review routes
+	router.HandleFunc("/reviews", handlers["review"].GetAllReviews).Methods("GET")
+	router.HandleFunc("/reviews/book/{bookId}/average-rating", handlers["review"].GetAverageRatingForBook).Methods("GET")
+
+	// Auth routes
+	router.HandleFunc("/login", handlers["auth"].Login).Methods("POST")
+	router.HandleFunc("/register", handlers["auth"].Register).Methods("POST")
+
+	// Admin routes (publicly accessible)
+	router.HandleFunc("/admin/dashboard", handlers["admin"].GetDashboardData).Methods("GET")
+	router.HandleFunc("/admin/books", handlers["admin"].ManageBooks).Methods("GET", "POST", "PUT", "DELETE")
+	router.HandleFunc("/admin/members", handlers["admin"].ManageMembers).Methods("GET", "POST", "PUT", "DELETE")
+
+	// Create a new router for authenticated routes
+	authenticatedRouter := router.PathPrefix("/authenticated").Subrouter()
+	authenticatedRouter.Use(middleware.AuthMiddleware)
+
+	// Register routes that require authentication
+	authenticatedRouter.HandleFunc("/admin/dashboard", handlers["admin"].GetDashboardData).Methods("GET")
+	authenticatedRouter.HandleFunc("/admin/books", handlers["admin"].ManageBooks).Methods("GET", "POST", "PUT", "DELETE")
+}
+
+// startServer starts the server with the given router and configuration.
+func startServer(router *mux.Router, cfg config.Config) error {
 	server := &http.Server{
-		Addr:    fmt.Sprintf("%s:%d", cfg.ServerAddress, cfg.ServerPort),
+		Addr:    fmt.Sprintf(":%d", cfg.ServerPort),
 		Handler: router,
 	}
 
 	go func() {
-		log.Printf("Server is running on %s:%d", cfg.ServerAddress, cfg.ServerPort)
+		log.Printf("Server is running on port %d", cfg.ServerPort)
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatal("Failed to start server:", err)
+			log.Fatal(err)
 		}
 	}()
 
-	// Graceful shutdown
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt)
 	<-quit
@@ -93,7 +153,9 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := server.Shutdown(ctx); err != nil {
-		log.Fatal("Server forced to shutdown:", err)
+		log.Fatal(err)
 	}
+
 	log.Println("Server exited")
+	return nil
 }

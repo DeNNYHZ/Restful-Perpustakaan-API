@@ -34,6 +34,7 @@ type Config struct {
 	// External service configuration (example)
 	ExternalServiceAPIKey  string
 	ExternalServiceBaseURL string
+	DatabaseURL            string
 }
 
 // LoadConfig loads configuration from environment variables or a .env file
@@ -52,9 +53,9 @@ func LoadConfig() (*Config, error) {
 
 		DBHost:     getEnv("DB_HOST", "localhost"),
 		DBPort:     getEnvAsInt("DB_PORT", 5432),
-		DBUser:     getEnv("DB_USER", "your_db_user"),
-		DBPassword: getEnv("DB_PASSWORD", "your_db_password"),
-		DBName:     getEnv("DB_NAME", "your_db_name"),
+		DBUser:     getEnv("DB_USER", "postgres"),
+		DBPassword: getEnv("DB_PASSWORD", "admin"),
+		DBName:     getEnv("DB_NAME", "perpustakaan_db"),
 
 		JWTSecretKey:      getEnv("JWT_SECRET_KEY", "your_secret_key"),
 		JWTExpirationTime: getEnvAsInt("JWT_EXPIRATION_TIME", 3600), // 1 hour in seconds

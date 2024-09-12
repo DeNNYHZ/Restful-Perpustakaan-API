@@ -1,4 +1,4 @@
-package user
+package models
 
 // User represents a user entity.
 type User struct {

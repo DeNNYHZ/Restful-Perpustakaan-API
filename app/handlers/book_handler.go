@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"Restful-Perpustakaan-API/app/models"
+	_ "Restful-Perpustakaan-API/app/utils"
 	"Restful-Perpustakaan-API/database"
 	"encoding/json"
 	"net/http"
@@ -10,7 +11,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// Struktur data untuk buku
+// Book represents a book entity
 type Book struct {
 	ID            int     `json:"id"`
 	Title         string  `json:"title"`
@@ -22,35 +23,60 @@ type Book struct {
 	ISBN          string  `json:"isbn"`
 	Genre         string  `json:"genre"`
 	Description   string  `json:"description"`
-	CoverImage    string  `json:"cover_image"` // URL atau path ke gambar sampul
+	CoverImage    string  `json:"cover_image"` // URL or path to cover image
 }
 
-// Simulasi penyimpanan buku (ganti dengan database sebenarnya)
+// books is a simulated in-memory book store
 var books []Book
 
-// Handler untuk menambahkan buku
+// AddBook adds a new book to the store
 func AddBook(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
 	var book Book
-	_ = json.NewDecoder(r.Body).Decode(&book)
+	err := json.NewDecoder(r.Body).Decode(&book)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 	book.ID = len(books) + 1
 	books = append(books, book)
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(book)
 }
 
-// GetAllBooks retrieves all books from the database.
+// GetAllBooks retrieves all books from the database
 func GetAllBooks(w http.ResponseWriter, r *http.Request) {
 	books, err := database.GetAllBooks()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(books)
 }
 
-// GetBookByID retrieves a book by its ID.
+// GetBook retrieves a book by its ID
+func GetBook(id int) models.BookModel {
+	book, err := database.GetBookByID(id)
+	if err != nil {
+		return models.BookModel{}
+	}
+	return models.BookModel{
+		ID:            book.ID,
+		Title:         book.Title,
+		Author:        book.Author,
+		Year:          book.Year,
+		Rating:        book.Rating,
+		Publisher:     book.Publisher,
+		PublishedYear: book.PublishedYear,
+		ISBN:          book.ISBN,
+		Genre:         book.Genre,
+		Description:   book.Description,
+		CoverImage:    book.CoverImage, // URL atau path ke gambar sampul
+		// Copy other fields as needed
+	}
+}
+
+// GetBookByID retrieves a book by its ID
 func GetBookByID(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	id, err := strconv.Atoi(params["id"])
@@ -58,18 +84,16 @@ func GetBookByID(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid book ID", http.StatusBadRequest)
 		return
 	}
-
 	book, err := database.GetBookByID(id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(book)
 }
 
-// CreateBook adds a new book to the database.
+// CreateBook adds a new book to the database
 func CreateBook(w http.ResponseWriter, r *http.Request) {
 	var newBook models.Book
 	err := json.NewDecoder(r.Body).Decode(&newBook)
@@ -77,19 +101,17 @@ func CreateBook(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-
 	err = database.CreateBook(&newBook)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(newBook)
 }
 
-// UpdateBook updates an existing book in the database.
+// UpdateBook updates an existing book in the database
 func UpdateBook(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	id, err := strconv.Atoi(params["id"])
@@ -97,7 +119,6 @@ func UpdateBook(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid book ID", http.StatusBadRequest)
 		return
 	}
-
 	var updatedBook models.Book
 	err = json.NewDecoder(r.Body).Decode(&updatedBook)
 	if err != nil {
@@ -105,18 +126,16 @@ func UpdateBook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	updatedBook.ID = id
-
 	err = database.UpdateBook(&updatedBook)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(updatedBook)
 }
 
-// DeleteBook removes a book from the database by its ID.
+// DeleteBook removes a book from the database by its ID
 func DeleteBook(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	id, err := strconv.Atoi(params["id"])
@@ -124,12 +143,10 @@ func DeleteBook(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid book ID", http.StatusBadRequest)
 		return
 	}
-
 	err = database.DeleteBook(id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
 	w.WriteHeader(http.StatusNoContent)
 }

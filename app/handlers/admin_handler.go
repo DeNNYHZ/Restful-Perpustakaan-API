@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"Restful-Perpustakaan-API/app/converters"
-	"Restful-Perpustakaan-API/app/user"
+	"Restful-Perpustakaan-API/app/models"
 	"Restful-Perpustakaan-API/database" // Update with the actual path
 	"encoding/json"
 	"github.com/gorilla/mux"
@@ -98,7 +98,7 @@ func ManageUsers(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(users)
 
 	case http.MethodPost:
-		var newUser user.User
+		var newUser models.User
 		err := json.NewDecoder(r.Body).Decode(&newUser)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -115,7 +115,7 @@ func ManageUsers(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		var updatedUser user.User
+		var updatedUser models.User
 		err = json.NewDecoder(r.Body).Decode(&updatedUser)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)

@@ -8,18 +8,29 @@ import (
 )
 
 // BookRepository provides methods for interacting with the book data in the database
-type BookRepository struct {
-	db *sql.DB
+type BookRepository interface {
+	GetAllBooks() ([]models.Book, error)
+	GetBookByID(id int) (*models.Book, error)
+	CreateBook(b *models.Book) error
+	UpdateBook(b *models.Book) error
+	DeleteBook(id int) error
+	GetRecommendations() ([]models.Book, error)
+	GetPersonalizedRecommendations(id int) ([]models.Book, error)
+	GetTotalBooks() (interface{}, interface{})
 }
 
 // NewBookRepository creates a new BookRepository instance
-func NewBookRepository(db *sql.DB) *BookRepository {
-	return &BookRepository{db: db}
+func NewBookRepository(db *sql.DB) *bookRepository {
+	return &bookRepository{db: db}
 }
 
-// GetAllBooks mengambil semua buku dari database
-func (br *BookRepository) GetAllBooks() ([]models.Book, error) {
-	query := `
+type bookRepository struct {
+	db *sql.DB
+}
+
+// GetAllBooks retrieves all books from the database
+func (br *bookRepository) GetAllBooks() ([]models.Book, error) {
+	const query = `
         SELECT id, title, author, publisher, published_year, isbn, genre, description, cover_image 
         FROM books
     `
@@ -33,8 +44,7 @@ func (br *BookRepository) GetAllBooks() ([]models.Book, error) {
 	var books []models.Book
 	for rows.Next() {
 		var b models.Book
-		err := rows.Scan(&b.ID, &b.Title, &b.Author, &b.Publisher, &b.PublishedYear, &b.ISBN, &b.Genre, &b.Description, &b.CoverImage)
-		if err != nil {
+		if err := rows.Scan(&b.ID, &b.Title, &b.Author, &b.Publisher, &b.PublishedYear, &b.ISBN, &b.Genre, &b.Description, &b.CoverImage); err != nil {
 			return nil, err
 		}
 		books = append(books, b)
@@ -43,13 +53,13 @@ func (br *BookRepository) GetAllBooks() ([]models.Book, error) {
 	return books, nil
 }
 
-// GetBookByID mengambil buku berdasarkan ID dari database
-func (br *BookRepository) GetBookByID(id int) (*models.Book, error) {
-	query := `
+// GetBookByID retrieves a book by ID from the database
+func (br *bookRepository) GetBookByID(id int) (*models.Book, error) {
+	const query = `
         SELECT id, title, author, publisher, published_year, isbn, genre, description, cover_image 
         FROM books 
         WHERE id = $1
-    ` // Menggunakan placeholder $1 untuk PostgreSQL
+    `
 
 	var b models.Book
 	err := br.db.QueryRow(query, id).Scan(&b.ID, &b.Title, &b.Author, &b.Publisher, &b.PublishedYear, &b.ISBN, &b.Genre, &b.Description, &b.CoverImage)
@@ -63,13 +73,13 @@ func (br *BookRepository) GetBookByID(id int) (*models.Book, error) {
 	return &b, nil
 }
 
-// CreateBook membuat buku baru di database
-func (br *BookRepository) CreateBook(b *models.Book) error {
-	query := `
+// CreateBook creates a new book in the database
+func (br *bookRepository) CreateBook(b *models.Book) error {
+	const query = `
         INSERT INTO books (title, author, publisher, published_year, isbn, genre, description, cover_image) 
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         RETURNING id 
-    ` // Menggunakan placeholder $1, $2, dll. dan RETURNING id untuk PostgreSQL
+    `
 
 	err := br.db.QueryRow(query, b.Title, b.Author, b.Publisher, b.PublishedYear, b.ISBN, b.Genre, b.Description, b.CoverImage).Scan(&b.ID)
 	if err != nil {
@@ -79,37 +89,36 @@ func (br *BookRepository) CreateBook(b *models.Book) error {
 	return nil
 }
 
-// UpdateBook memperbarui buku di database
-func (br *BookRepository) UpdateBook(b *models.Book) error {
-	query := `
+// UpdateBook updates a book in the database
+func (br *bookRepository) UpdateBook(b *models.Book) error {
+	const query = `
         UPDATE books 
         SET title = $1, author = $2, publisher = $3, published_year = $4, isbn = $5, genre = $6, description = $7, cover_image = $8
         WHERE id = $9
-    ` // Menggunakan placeholder
+    `
 
 	_, err := br.db.Exec(query, b.Title, b.Author, b.Publisher, b.PublishedYear, b.ISBN, b.Genre, b.Description, b.CoverImage, b.ID)
 	return err
 }
 
-// DeleteBook menghapus buku dari database
-func (br *BookRepository) DeleteBook(id int) error {
-	query := "DELETE FROM books WHERE id = $1" // Menggunakan placeholder
+// DeleteBook deletes a book from the database
+func (br *bookRepository) DeleteBook(id int) error {
+	const query = "DELETE FROM books WHERE id = $1"
+
 	_, err := br.db.Exec(query, id)
 	return err
 }
 
-// GetRecommendations mengambil rekomendasi buku
-func (br *BookRepository) GetRecommendations() ([]models.Book, error) {
+// GetRecommendations retrieves book recommendations
+func (br *bookRepository) GetRecommendations() ([]models.Book, error) {
 	return nil, nil
 }
 
-// PersonalizedRecommendations
-func (br *BookRepository) GetPersonalizedRecommendations(id int) ([]models.Book, error) {
+// GetPersonalizedRecommendations retrieves personalized book recommendations
+func (br *bookRepository) GetPersonalizedRecommendations(id int) ([]models.Book, error) {
 	return nil, nil
 }
 
-func (br *BookRepository) GetTotalBooks() (interface{}, interface{}) {
+func (br *bookRepository) GetTotalBooks() (interface{}, interface{}) {
 	return nil, nil
 }
-
-// ... (fungsi lain yang mungkin Anda butuhkan, seperti GetBooksByTitle, GetBooksByAuthor, dll.)
