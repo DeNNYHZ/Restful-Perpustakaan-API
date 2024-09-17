@@ -115,7 +115,3 @@ Dokumentasi API yang lebih lengkap dapat ditemukan di *[URL_DOKUMENTASI_API]*.
 ## Kontribusi
 
 Kontribusi sangat diharapkan! Silakan buka issue atau pull request jika Anda menemukan bug atau ingin menambahkan fitur baru.
-
-## Lisensi
-
-Proyek ini dilisensikan di bawah [Lisensi MIT](LICENSE).
